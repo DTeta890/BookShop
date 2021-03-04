@@ -1,0 +1,114 @@
+﻿@model IEnumerable<Book>
+@{
+    ViewData["Title"] = "BookStore";
+}
+
+<p class="display-3 text-center">Book Store</p>
+<div class="row">
+    <div class="col-sm-8">
+        <!-- Book Table -->
+        <table id="bookTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Author</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <th class="loadInfo">@item.Id</th>
+                        <td>@item.Name</td>
+                        <td>@item.Author</td>
+                        <td><input type="button" class="btn btn-warning" value="Rented By" onclick="getPersonByBook(@item.Id)" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="col-sm-4">
+        <!-- Person Table -->
+        <table id="personTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Book Info Modal -->
+<div class="modal fade" id="bookInfoModal" tabindex="-1" aria-labelledby="bookInfoModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Book Info</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script type="text/javascript">
+        // Load Person Table
+        function getPersonByBook(bookId) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("PersonPerBook")',
+                dataType: "JSON",
+                data: { BookId: bookId },
+                success: function (data) {
+                    $("#personTable tbody").empty();
+                    if (data.length === 0) {
+                        $("#personTable tbody").append("<tr><td>No renters found!</td></tr>");
+                    } else {
+                        data.forEach(function (person) {
+                            addPerson(person.id, person.name, person.age);
+                        });
+                    }
+                },
+                error: function (response) {
+                    console.log(response);
+                }
+            });
+        }
+        function addPerson(id, name, age) {
+            $("#personTable tbody").append(`<tr><td>${id}</td><td>${name}</td><td>${age}</td></tr>`);
+        }
+        // Modal
+        $("#bookTable").on("click", ".loadInfo", function () {
+            $(".modal-body").empty();
+            $(this).attr("data-toggle", "modal").attr("data-target", "#bookInfoModal");
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetBookInfo")',
+                dataType: "JSON",
+                data: { BookId: $(this).text() },
+                success: function (data) {
+                    $(".modal-body").append(`<p>ISBN: ${data.isbn}</p><p>Description: ${data.description}</p>`);
+                },
+                error: function (response) {
+                    console.log(response);
+                }
+            });
+        });
+
+    </script>
+}
